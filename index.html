@@ -88,6 +88,23 @@
             background-color: #0d47a1;
         }
         
+        .toggle-generic {
+            background-color: #ff9800;
+            margin-top: 10px;
+        }
+        
+        .toggle-generic:hover {
+            background-color: #f57c00;
+        }
+        
+        .toggle-generic.showing {
+            background-color: #f44336;
+        }
+        
+        .toggle-generic.showing:hover {
+            background-color: #d32f2f;
+        }
+        
         .results-container {
             display: none;
             background-color: white;
@@ -184,26 +201,32 @@
             font-weight: 600;
             margin-bottom: 10px;
             font-size: 16px;
+            text-align: center;
+            background: #f0f0f0;
+            padding: 8px 15px;
+            border-radius: 8px;
+            width: 100%;
+            max-width: 320px;
         }
         
         .shelf-levels {
             display: flex;
             flex-direction: column;
             width: 100%;
-            max-width: 280px;
+            max-width: 320px;
             border: 2px solid #333;
             border-radius: 5px;
             overflow: hidden;
         }
         
         .shelf-level {
-            min-height: 35px;
+            min-height: 50px;
             display: flex;
             flex-direction: column;
             justify-content: center;
             border-bottom: 1px solid #ddd;
             position: relative;
-            padding: 5px 5px 5px 40px;
+            padding: 8px 8px 8px 50px;
         }
         
         .shelf-level:last-child {
@@ -220,11 +243,19 @@
         
         .level-number {
             position: absolute;
-            left: 10px;
-            font-size: 12px;
+            left: 15px;
+            font-size: 14px;
             color: #666;
             top: 50%;
             transform: translateY(-50%);
+            font-weight: 600;
+            background: #f0f0f0;
+            width: 25px;
+            height: 25px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
         
         .meds-on-shelf {
@@ -235,10 +266,24 @@
         
         .shelf-med {
             background-color: rgba(0, 0, 0, 0.1);
-            padding: 2px 6px;
-            border-radius: 10px;
-            font-size: 11px;
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 12px;
             white-space: nowrap;
+        }
+        
+        .shelf-med.reference {
+            background-color: rgba(76, 175, 80, 0.2);
+            border: 1px solid #4caf50;
+        }
+        
+        .shelf-med-name {
+            font-weight: 600;
+        }
+        
+        .shelf-med-lab {
+            font-size: 10px;
+            opacity: 0.8;
         }
         
         .legend {
@@ -295,6 +340,29 @@
             padding: 20px;
             color: #666;
         }
+        
+        .prateleira-info {
+            font-size: 14px;
+            color: #666;
+            margin-top: 5px;
+        }
+        
+        .location-reference {
+            background-color: #4caf50;
+        }
+        
+        .location-generic {
+            background-color: #1a73e8;
+        }
+        
+        .shelf-controls {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-bottom: 15px;
+            width: 100%;
+            max-width: 320px;
+        }
     </style>
 </head>
 <body>
@@ -310,16 +378,16 @@
             <h2>Pesquisar Medicamento</h2>
             <p>Digite o nome do medicamento</p>
             <div class="search-box">
-                <input type="text" id="searchInput" placeholder="Ex: Tylenol, Novalgina, Lasix...">
+                <input type="text" id="searchInput" placeholder="Ex: Dipirona, Tylenol, Losartana...">
                 <button id="searchButton">Pesquisar</button>
             </div>
             <div class="suggestions">
                 <p>Sugestões: 
+                    <span class="suggestion-item" data-med="Dipirona">Dipirona</span>
                     <span class="suggestion-item" data-med="Tylenol">Tylenol</span>
                     <span class="suggestion-item" data-med="Novalgina">Novalgina</span>
-                    <span class="suggestion-item" data-med="Lasix">Lasix</span>
-                    <span class="suggestion-item" data-med="Lipitor">Lipitor</span>
-                    <span class="suggestion-item" data-med="Cialis">Cialis</span>
+                    <span class="suggestion-item" data-med="Losartana">Losartana</span>
+                    <span class="suggestion-item" data-med="Omeprazol">Omeprazol</span>
                 </p>
             </div>
         </div>
@@ -341,8 +409,13 @@
         
         <div class="shelf-visualization" id="shelfVisualization">
             <h2 class="shelf-title">Visualização da Prateleira</h2>
+            
+            <div class="shelf-controls">
+                <button id="toggleGeneric" class="toggle-generic">Mostrar Genéricos</button>
+            </div>
+            
             <div class="shelf">
-                <div class="shelf-label" id="shelfLabel">Prateleira B</div>
+                <div class="shelf-label" id="shelfLabel">Prateleira A</div>
                 <div class="shelf-levels" id="shelfLevels">
                     <!-- Níveis da prateleira serão inseridos aqui -->
                 </div>
@@ -364,13 +437,50 @@
     <script>
         // Dados de exemplo - em um sistema real, isso viria de um banco de dados
         const medicamentos = [
-            // Analgésicos e Antitérmicos
+            // Dipirona - TODOS na Prateleira A
+            {
+                nome: "Novalgina 500mg",
+                laboratorio: "Sanofi",
+                tipo: "referencia",
+                prateleira: "A",
+                altura: 1,
+                categoria: "Analgésico e Antitérmico"
+            },
+            {
+                nome: "Dipirona 500mg",
+                laboratorio: "EMS",
+                tipo: "generico",
+                referencia: "Novalgina 500mg",
+                prateleira: "A",
+                altura: 2,
+                categoria: "Analgésico e Antitérmico"
+            },
+            {
+                nome: "Dipirona 500mg",
+                laboratorio: "Medley",
+                tipo: "generico",
+                referencia: "Novalgina 500mg",
+                prateleira: "A",
+                altura: 3,
+                categoria: "Analgésico e Antitérmico"
+            },
+            {
+                nome: "Dipirona 500mg",
+                laboratorio: "Eurofarma",
+                tipo: "generico",
+                referencia: "Novalgina 500mg",
+                prateleira: "A",
+                altura: 4,
+                categoria: "Analgésico e Antitérmico"
+            },
+            
+            // Paracetamol - TODOS na Prateleira B
             {
                 nome: "Tylenol 500mg",
                 laboratorio: "Johnson & Johnson",
                 tipo: "referencia",
                 prateleira: "B",
-                altura: 6,
+                altura: 1,
                 categoria: "Analgésico e Antitérmico"
             },
             {
@@ -379,7 +489,7 @@
                 tipo: "generico",
                 referencia: "Tylenol 500mg",
                 prateleira: "B",
-                altura: 6,
+                altura: 2,
                 categoria: "Analgésico e Antitérmico"
             },
             {
@@ -388,7 +498,7 @@
                 tipo: "generico",
                 referencia: "Tylenol 500mg",
                 prateleira: "B",
-                altura: 6,
+                altura: 3,
                 categoria: "Analgésico e Antitérmico"
             },
             {
@@ -397,77 +507,17 @@
                 tipo: "generico",
                 referencia: "Tylenol 500mg",
                 prateleira: "B",
-                altura: 7,
-                categoria: "Analgésico e Antitérmico"
-            },
-            {
-                nome: "Paracetamol 500mg",
-                laboratorio: "Aché",
-                tipo: "generico",
-                referencia: "Tylenol 500mg",
-                prateleira: "B",
-                altura: 7,
-                categoria: "Analgésico e Antitérmico"
-            },
-            {
-                nome: "Novalgina 500mg",
-                laboratorio: "Sanofi",
-                tipo: "referencia",
-                prateleira: "C",
                 altura: 4,
                 categoria: "Analgésico e Antitérmico"
             },
-            {
-                nome: "Dipirona Sódica 500mg",
-                laboratorio: "EMS",
-                tipo: "generico",
-                referencia: "Novalgina 500mg",
-                prateleira: "C",
-                altura: 4,
-                categoria: "Analgésico e Antitérmico"
-            },
-            {
-                nome: "Dipirona Sódica 500mg",
-                laboratorio: "Medley",
-                tipo: "generico",
-                referencia: "Novalgina 500mg",
-                prateleira: "C",
-                altura: 4,
-                categoria: "Analgésico e Antitérmico"
-            },
-            {
-                nome: "Dipirona Sódica 500mg",
-                laboratorio: "Eurofarma",
-                tipo: "generico",
-                referencia: "Novalgina 500mg",
-                prateleira: "C",
-                altura: 5,
-                categoria: "Analgésico e Antitérmico"
-            },
-            {
-                nome: "Dipirona Sódica 500mg",
-                laboratorio: "Aché",
-                tipo: "generico",
-                referencia: "Novalgina 500mg",
-                prateleira: "C",
-                altura: 5,
-                categoria: "Analgésico e Antitérmico"
-            },
+            
+            // Ibuprofeno - TODOS na Prateleira C
             {
                 nome: "Advil 400mg",
                 laboratorio: "Pfizer",
                 tipo: "referencia",
-                prateleira: "B",
-                altura: 8,
-                categoria: "Analgésico e Anti-inflamatório"
-            },
-            {
-                nome: "Ibuprofeno 400mg",
-                laboratorio: "Eurofarma",
-                tipo: "generico",
-                referencia: "Advil 400mg",
-                prateleira: "B",
-                altura: 8,
+                prateleira: "C",
+                altura: 1,
                 categoria: "Analgésico e Anti-inflamatório"
             },
             {
@@ -475,8 +525,8 @@
                 laboratorio: "EMS",
                 tipo: "generico",
                 referencia: "Advil 400mg",
-                prateleira: "B",
-                altura: 8,
+                prateleira: "C",
+                altura: 2,
                 categoria: "Analgésico e Anti-inflamatório"
             },
             {
@@ -484,64 +534,27 @@
                 laboratorio: "Medley",
                 tipo: "generico",
                 referencia: "Advil 400mg",
-                prateleira: "B",
-                altura: 9,
+                prateleira: "C",
+                altura: 3,
+                categoria: "Analgésico e Anti-inflamatório"
+            },
+            {
+                nome: "Ibuprofeno 400mg",
+                laboratorio: "Eurofarma",
+                tipo: "generico",
+                referencia: "Advil 400mg",
+                prateleira: "C",
+                altura: 4,
                 categoria: "Analgésico e Anti-inflamatório"
             },
             
-            // Diuréticos
-            {
-                nome: "Lasix 40mg",
-                laboratorio: "Sanofi",
-                tipo: "referencia",
-                prateleira: "A",
-                altura: 3,
-                categoria: "Diurético"
-            },
-            {
-                nome: "Furosemida 40mg",
-                laboratorio: "EMS",
-                tipo: "generico",
-                referencia: "Lasix 40mg",
-                prateleira: "A",
-                altura: 3,
-                categoria: "Diurético"
-            },
-            {
-                nome: "Furosemida 40mg",
-                laboratorio: "Eurofarma",
-                tipo: "generico",
-                referencia: "Lasix 40mg",
-                prateleira: "A",
-                altura: 3,
-                categoria: "Diurético"
-            },
-            {
-                nome: "Furosemida 40mg",
-                laboratorio: "Medley",
-                tipo: "generico",
-                referencia: "Lasix 40mg",
-                prateleira: "A",
-                altura: 2,
-                categoria: "Diurético"
-            },
-            {
-                nome: "Furosemida 40mg",
-                laboratorio: "Aché",
-                tipo: "generico",
-                referencia: "Lasix 40mg",
-                prateleira: "A",
-                altura: 2,
-                categoria: "Diurético"
-            },
-            
-            // Anti-hipertensivos
+            // Losartana - TODOS na Prateleira D
             {
                 nome: "Aradois 100mg",
                 laboratorio: "Sanofi",
                 tipo: "referencia",
                 prateleira: "D",
-                altura: 5,
+                altura: 1,
                 categoria: "Anti-hipertensivo"
             },
             {
@@ -550,7 +563,7 @@
                 tipo: "generico",
                 referencia: "Aradois 100mg",
                 prateleira: "D",
-                altura: 5,
+                altura: 2,
                 categoria: "Anti-hipertensivo"
             },
             {
@@ -559,7 +572,7 @@
                 tipo: "generico",
                 referencia: "Aradois 100mg",
                 prateleira: "D",
-                altura: 5,
+                altura: 3,
                 categoria: "Anti-hipertensivo"
             },
             {
@@ -568,100 +581,17 @@
                 tipo: "generico",
                 referencia: "Aradois 100mg",
                 prateleira: "D",
-                altura: 6,
-                categoria: "Anti-hipertensivo"
-            },
-            {
-                nome: "Losartana 100mg",
-                laboratorio: "Aché",
-                tipo: "generico",
-                referencia: "Aradois 100mg",
-                prateleira: "D",
-                altura: 6,
+                altura: 4,
                 categoria: "Anti-hipertensivo"
             },
             
-            // Redutores de colesterol
-            {
-                nome: "Lipitor 20mg",
-                laboratorio: "Pfizer",
-                tipo: "referencia",
-                prateleira: "E",
-                altura: 7,
-                categoria: "Redutor de Colesterol"
-            },
-            {
-                nome: "Atorvastatina 20mg",
-                laboratorio: "EMS",
-                tipo: "generico",
-                referencia: "Lipitor 20mg",
-                prateleira: "E",
-                altura: 7,
-                categoria: "Redutor de Colesterol"
-            },
-            {
-                nome: "Atorvastatina 20mg",
-                laboratorio: "Eurofarma",
-                tipo: "generico",
-                referencia: "Lipitor 20mg",
-                prateleira: "E",
-                altura: 7,
-                categoria: "Redutor de Colesterol"
-            },
-            {
-                nome: "Atorvastatina 20mg",
-                laboratorio: "Medley",
-                tipo: "generico",
-                referencia: "Lipitor 20mg",
-                prateleira: "E",
-                altura: 8,
-                categoria: "Redutor de Colesterol"
-            },
-            {
-                nome: "Atorvastatina 20mg",
-                laboratorio: "Aché",
-                tipo: "generico",
-                referencia: "Lipitor 20mg",
-                prateleira: "E",
-                altura: 8,
-                categoria: "Redutor de Colesterol"
-            },
-            
-            // Antidepressivos
-            {
-                nome: "Prozac 20mg",
-                laboratorio: "Eli Lilly",
-                tipo: "referencia",
-                prateleira: "F",
-                altura: 4,
-                categoria: "Antidepressivo"
-            },
-            {
-                nome: "Fluoxetina 20mg",
-                laboratorio: "EMS",
-                tipo: "generico",
-                referencia: "Prozac 20mg",
-                prateleira: "F",
-                altura: 4,
-                categoria: "Antidepressivo"
-            },
-            {
-                nome: "Fluoxetina 20mg",
-                laboratorio: "Eurofarma",
-                tipo: "generico",
-                referencia: "Prozac 20mg",
-                prateleira: "F",
-                altura: 4,
-                categoria: "Antidepressivo"
-            },
-            
-            // Antiulcerosos
+            // Omeprazol - TODOS na Prateleira E
             {
                 nome: "Losec 20mg",
                 laboratorio: "AstraZeneca",
                 tipo: "referencia",
-                prateleira: "G",
-                altura: 9,
+                prateleira: "E",
+                altura: 1,
                 categoria: "Antiulceroso"
             },
             {
@@ -669,8 +599,8 @@
                 laboratorio: "EMS",
                 tipo: "generico",
                 referencia: "Losec 20mg",
-                prateleira: "G",
-                altura: 9,
+                prateleira: "E",
+                altura: 2,
                 categoria: "Antiulceroso"
             },
             {
@@ -678,8 +608,8 @@
                 laboratorio: "Medley",
                 tipo: "generico",
                 referencia: "Losec 20mg",
-                prateleira: "G",
-                altura: 9,
+                prateleira: "E",
+                altura: 3,
                 categoria: "Antiulceroso"
             },
             {
@@ -687,74 +617,46 @@
                 laboratorio: "Eurofarma",
                 tipo: "generico",
                 referencia: "Losec 20mg",
-                prateleira: "G",
-                altura: 10,
-                categoria: "Antiulceroso"
-            },
-            {
-                nome: "Omeprazol 20mg",
-                laboratorio: "Aché",
-                tipo: "generico",
-                referencia: "Losec 20mg",
-                prateleira: "G",
-                altura: 10,
+                prateleira: "E",
+                altura: 4,
                 categoria: "Antiulceroso"
             },
             
-            // Antialérgicos
+            // Atorvastatina - TODOS na Prateleira F
             {
-                nome: "Allegra 180mg",
-                laboratorio: "Sanofi",
+                nome: "Lipitor 20mg",
+                laboratorio: "Pfizer",
                 tipo: "referencia",
-                prateleira: "H",
-                altura: 3,
-                categoria: "Antialérgico"
+                prateleira: "F",
+                altura: 1,
+                categoria: "Redutor de Colesterol"
             },
             {
-                nome: "Fexofenadina 180mg",
-                laboratorio: "Eurofarma",
-                tipo: "generico",
-                referencia: "Allegra 180mg",
-                prateleira: "H",
-                altura: 3,
-                categoria: "Antialérgico"
-            },
-            {
-                nome: "Fexofenadina 180mg",
+                nome: "Atorvastatina 20mg",
                 laboratorio: "EMS",
                 tipo: "generico",
-                referencia: "Allegra 180mg",
-                prateleira: "H",
-                altura: 3,
-                categoria: "Antialérgico"
-            },
-            
-            // Disfunção erétil
-            {
-                nome: "Cialis 5mg",
-                laboratorio: "Eli Lilly",
-                tipo: "referencia",
-                prateleira: "I",
-                altura: 12,
-                categoria: "Disfunção Erétil"
+                referencia: "Lipitor 20mg",
+                prateleira: "F",
+                altura: 2,
+                categoria: "Redutor de Colesterol"
             },
             {
-                nome: "Tadalafila 5mg",
-                laboratorio: "EMS",
-                tipo: "generico",
-                referencia: "Cialis 5mg",
-                prateleira: "I",
-                altura: 12,
-                categoria: "Disfunção Erétil"
-            },
-            {
-                nome: "Tadalafila 5mg",
+                nome: "Atorvastatina 20mg",
                 laboratorio: "Medley",
                 tipo: "generico",
-                referencia: "Cialis 5mg",
-                prateleira: "I",
-                altura: 12,
-                categoria: "Disfunção Erétil"
+                referencia: "Lipitor 20mg",
+                prateleira: "F",
+                altura: 3,
+                categoria: "Redutor de Colesterol"
+            },
+            {
+                nome: "Atorvastatina 20mg",
+                laboratorio: "Eurofarma",
+                tipo: "generico",
+                referencia: "Lipitor 20mg",
+                prateleira: "F",
+                altura: 4,
+                categoria: "Redutor de Colesterol"
             }
         ];
 
@@ -769,7 +671,13 @@
         const shelfVisualization = document.getElementById('shelfVisualization');
         const shelfLabel = document.getElementById('shelfLabel');
         const shelfLevels = document.getElementById('shelfLevels');
+        const toggleGeneric = document.getElementById('toggleGeneric');
         const suggestionItems = document.querySelectorAll('.suggestion-item');
+
+        // Variáveis de estado
+        let medicamentoAtual = null;
+        let genericosAtuais = [];
+        let showingGenerics = false;
 
         // Função para pesquisar medicamento
         function pesquisarMedicamento() {
@@ -782,13 +690,17 @@
             
             // Encontrar medicamento de referência
             const referencia = medicamentos.find(med => 
-                med.tipo === "referencia" && med.nome.toLowerCase().includes(termo)
+                med.tipo === "referencia" && (
+                    med.nome.toLowerCase().includes(termo) ||
+                    med.categoria.toLowerCase().includes(termo)
+                )
             );
             
             if (!referencia) {
                 // Tentar encontrar qualquer medicamento (referência ou genérico)
                 const qualquerMed = medicamentos.find(med => 
-                    med.nome.toLowerCase().includes(termo)
+                    med.nome.toLowerCase().includes(termo) ||
+                    med.categoria.toLowerCase().includes(termo)
                 );
                 
                 if (qualquerMed) {
@@ -822,8 +734,19 @@
 
         // Função para exibir resultados
         function exibirResultados(referencia, genericos) {
+            medicamentoAtual = referencia;
+            genericosAtuais = genericos;
+            showingGenerics = false;
+            
+            // Atualizar botão
+            toggleGeneric.textContent = "Mostrar Genéricos";
+            toggleGeneric.classList.remove("showing");
+            
             // Atualizar título
-            resultsTitle.textContent = `Resultados para "${referencia.nome}"`;
+            resultsTitle.textContent = `Resultados para "${referencia.nome.split(' ')[0]}"`;
+            
+            // Determinar cor da localização
+            const locationClass = referencia.tipo === "referencia" ? "location-reference" : "location-generic";
             
             // Exibir medicamento de referência
             referenceMed.innerHTML = `
@@ -834,7 +757,7 @@
                         <div class="med-laboratory">Laboratório: ${referencia.laboratorio}</div>
                         <div class="med-laboratory">Categoria: ${referencia.categoria}</div>
                     </div>
-                    <div class="med-location">${referencia.prateleira} - Altura ${referencia.altura}</div>
+                    <div class="med-location ${locationClass}">Prateleira ${referencia.prateleira} - Altura ${referencia.altura}</div>
                 </div>
             `;
             
@@ -848,9 +771,9 @@
                             <div class="med-info">
                                 <div class="med-name">${med.nome}</div>
                                 <div class="med-laboratory">Laboratório: ${med.laboratorio}</div>
-                                <div class="med-laboratory">Categoria: ${med.categoria}</div>
+                                <div class="prateleira-info">Prateleira ${med.prateleira} - Altura ${med.altura}</div>
                             </div>
-                            <div class="med-location">${med.prateleira} - Altura ${med.altura}</div>
+                            <div class="med-location location-generic">Prateleira ${med.prateleira} - Altura ${med.altura}</div>
                         </div>
                     `;
                 });
@@ -861,7 +784,7 @@
             }
             
             // Exibir visualização da prateleira
-            exibirPrateleira(referencia, genericos);
+            exibirPrateleira();
             
             // Mostrar resultados
             resultsContainer.style.display = 'block';
@@ -872,32 +795,43 @@
         }
 
         // Função para exibir visualização da prateleira
-        function exibirPrateleira(referencia, genericos) {
-            shelfLabel.textContent = `Prateleira ${referencia.prateleira}`;
+        function exibirPrateleira() {
+            if (!medicamentoAtual) return;
+            
+            // Usar a prateleira do medicamento atual
+            const prateleiraAtual = medicamentoAtual.prateleira;
+            shelfLabel.textContent = `Prateleira ${prateleiraAtual}`;
             
             // Agrupar medicamentos por altura
             const medicamentosPorAltura = {};
             
-            // Adicionar referência
-            if (!medicamentosPorAltura[referencia.altura]) {
-                medicamentosPorAltura[referencia.altura] = [];
+            // Sempre adicionar referência
+            const alturaReferencia = medicamentoAtual.altura;
+            if (!medicamentosPorAltura[alturaReferencia]) {
+                medicamentosPorAltura[alturaReferencia] = [];
             }
-            medicamentosPorAltura[referencia.altura].push({
-                nome: referencia.nome.split(' ')[0],
+            medicamentosPorAltura[alturaReferencia].push({
+                nome: medicamentoAtual.nome.split(' ')[0],
+                laboratorio: medicamentoAtual.laboratorio,
                 tipo: 'referencia'
             });
             
-            // Adicionar genéricos
-            genericos.forEach(med => {
-                if (!medicamentosPorAltura[med.altura]) {
-                    medicamentosPorAltura[med.altura] = [];
-                }
-                medicamentosPorAltura[med.altura].push({
-                    nome: med.nome.split(' ')[0],
-                    tipo: 'generico',
-                    laboratorio: med.laboratorio
-                });
-            });
+            // Adicionar genéricos da MESMA PRATELEIRA apenas se estiver mostrando
+            if (showingGenerics) {
+                genericosAtuais
+                    .filter(med => med.prateleira === prateleiraAtual) // Apenas da mesma prateleira
+                    .forEach(med => {
+                        const altura = med.altura;
+                        if (!medicamentosPorAltura[altura]) {
+                            medicamentosPorAltura[altura] = [];
+                        }
+                        medicamentosPorAltura[altura].push({
+                            nome: med.nome.split(' ')[0],
+                            laboratorio: med.laboratorio,
+                            tipo: 'generico'
+                        });
+                    });
+            }
             
             // Criar níveis da prateleira
             let niveisHTML = '';
@@ -918,8 +852,13 @@
                     
                     conteudo = '<div class="meds-on-shelf">';
                     medicamentosPorAltura[nivel].forEach(med => {
-                        const nomeAbreviado = med.nome.length > 8 ? med.nome.substring(0, 8) + '...' : med.nome;
-                        conteudo += `<span class="shelf-med" title="${med.nome} ${med.laboratorio ? '(' + med.laboratorio + ')' : ''}">${nomeAbreviado}</span>`;
+                        const classeMed = med.tipo === 'referencia' ? 'shelf-med reference' : 'shelf-med';
+                        conteudo += `
+                            <span class="${classeMed}" title="${med.nome} - ${med.laboratorio}">
+                                <div class="shelf-med-name">${med.nome}</div>
+                                <div class="shelf-med-lab">${med.laboratorio}</div>
+                            </span>
+                        `;
                     });
                     conteudo += '</div>';
                 }
@@ -935,6 +874,21 @@
             shelfLevels.innerHTML = niveisHTML;
         }
 
+        // Função para alternar genéricos
+        function alternarGenericos() {
+            showingGenerics = !showingGenerics;
+            
+            if (showingGenerics) {
+                toggleGeneric.textContent = "Ocultar Genéricos";
+                toggleGeneric.classList.add("showing");
+            } else {
+                toggleGeneric.textContent = "Mostrar Genéricos";
+                toggleGeneric.classList.remove("showing");
+            }
+            
+            exibirPrateleira();
+        }
+
         // Event Listeners
         searchButton.addEventListener('click', pesquisarMedicamento);
         
@@ -948,8 +902,13 @@
             searchInput.value = '';
             resultsContainer.style.display = 'none';
             shelfVisualization.style.display = 'none';
+            medicamentoAtual = null;
+            genericosAtuais = [];
+            showingGenerics = false;
             searchInput.focus();
         });
+
+        toggleGeneric.addEventListener('click', alternarGenericos);
 
         // Adicionar eventos para as sugestões
         suggestionItems.forEach(item => {
